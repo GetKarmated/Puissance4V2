@@ -25,7 +25,6 @@ def minimax_alpha_beta(plateau: Plateau, couleur: str, couleurIA: str, depth: in
 
                     for colonne in coupsPossibles(plateau_test):
                         ligne= plateau_test.jouerJeton(colonne, couleur)
-                        plateau_test.jouerJeton(colonne, couleur)
                         new_value = minimax_alpha_beta(plateau_test, getCouleurAdverse(couleur), couleurIA, depth-1, False, alpha, beta)[1]
                         if new_value > value:
                             value = new_value
@@ -43,7 +42,6 @@ def minimax_alpha_beta(plateau: Plateau, couleur: str, couleurIA: str, depth: in
 
                     for colonne in coupsPossibles(plateau_test):
                         ligne= plateau_test.jouerJeton (colonne, couleur)
-                        plateau_test.jouerJeton(colonne, couleur)
                         new_value = minimax_alpha_beta(plateau_test, getCouleurAdverse(couleur), couleurIA, depth-1, True, alpha, beta)[1]
                         if new_value < value:
                             value = new_value
