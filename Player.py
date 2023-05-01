@@ -15,7 +15,7 @@ class Player:
             while True:
                 try:
                     colonne= int(input())-1
-                    while colonne<0 or colonne>11 or plateau.matrice[5][colonne]!=None:
+                    while colonne<0 or colonne>11 or plateau.matrice[5][colonne].couleur !="blanc":
                         print("Colonne invalide, merci de choisir une colonne entre 1 et 12 et non pleine: ", end="")
                         colonne= int(input())-1
                     break

@@ -4,13 +4,13 @@ import numpy as np
 class Plateau:
 
     def __init__(self, historique: list = [], nbLignes: int= 6, nbColonnes: int= 12):
-        self.matrice= np.full((nbLignes, nbColonnes), None)
+        self.matrice= np.full((nbLignes, nbColonnes), Jeton())
         self.nbLignes = nbLignes
         self.nbColonnes = nbColonnes
         self.historique = historique
         if len(historique) > 0:
             for jeton in historique:
-                self.matrice[jeton.ligne][jeton.colonne] = jeton.couleur
+                self.matrice[jeton.ligne][jeton.colonne] = jeton
             
     def __str__(self):
         
@@ -18,7 +18,7 @@ class Plateau:
         for ligne in self.matrice[::-1]:
             plateau_str += '|'
             for element in ligne:
-                if isinstance(element, Jeton): plateau_str += ('\033[91m' + 'O' + '\033[0m' if element.couleur=='rouge' else '\033[93m' + 'O' + '\033[0m') + '|'
+                if element.couleur != "blanc": plateau_str += ('\033[91m' + 'O' + '\033[0m' if element.couleur=='rouge' else '\033[93m' + 'O' + '\033[0m') + '|'
                 else : plateau_str += ' |'
 
             plateau_str += '\n'
@@ -29,12 +29,16 @@ class Plateau:
     
     def jouerJeton(self, colonne: int, couleur: str):
          for ligne in range(6):
-            if self.matrice[ligne][colonne] == None:
+            if self.matrice[ligne][colonne].couleur == "blanc":
                 jeton = Jeton(ligne, colonne, couleur)
                 self.matrice[ligne][colonne] = jeton
                 self.historique.append(jeton)
                 return ligne
-    
+    def annulerCoup(self):
+        if len(self.historique) > 0:
+            jeton = self.historique.pop()
+            self.matrice[jeton.ligne][jeton.colonne] = Jeton()
+                
     def nombreJetons(self):
         return 42-len(self.historique)
     
@@ -50,36 +54,37 @@ class Plateau:
                 diagonale2 = np.diagonal(np.fliplr(self.matrice), offset=(self.matrice.shape[1]-jeton.colonne-1)-jeton.ligne)
 
                 for i in range(len(ligne)):
-                    try:
-                        if ligne[i] != None:
+                    if ligne[i].couleur != "blanc":
+                        try:
                             if ligne[i].couleur == ligne[i+1].couleur == ligne[i+2].couleur == ligne[i+3].couleur:
                                 return 1 #gagné
-                    except:
-                        pass
+                        except IndexError:
+                            pass
+                                
                 for i in range(len(colonne)):
-                    try:
-                        if colonne[i] != None:
+                    if colonne[i].couleur != "blanc":
+                        try:
                             if colonne[i].couleur == colonne[i+1].couleur == colonne[i+2].couleur == colonne[i+3].couleur:
                                 return 1 #gagné
-                    except:
-                        pass
-
+                        except IndexError:
+                            pass
+    
                 for i in range(len(diagonale1)):
-                    try:
-                        if diagonale1[i] != None:
+                    if diagonale1[i].couleur != "blanc":
+                        try:
                             if diagonale1[i].couleur == diagonale1[i+1].couleur == diagonale1[i+2].couleur == diagonale1[i+3].couleur:
                                 return 1 #gagné
-                    except:
-                        pass
+                        except IndexError:
+                            pass
 
                 for i in range(len(diagonale2)):
-                    try:
-                        if diagonale2[i] != None:
+                    if diagonale2[i].couleur != "blanc":
+                        try:
                             if diagonale2[i].couleur == diagonale2[i+1].couleur == diagonale2[i+2].couleur == diagonale2[i+3].couleur:
                                 return 1 #gagné
-                    except:
-                        pass
-                            
+                        except IndexError:
+                            pass
+                                
                 return 0 #partie en cours
             else:
                 return -1 #erreur

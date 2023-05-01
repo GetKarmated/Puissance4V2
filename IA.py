@@ -2,117 +2,145 @@ from Plateau import Plateau
 from Jeton import Jeton
 import time
 
-# Décalage à appliquer en abscisse pour chaque direction
-DIRECTION_DELTA_X = [1, 0, 1, 1]
-# Décalage à appliquer en ordonnée pour chaque direction
-DIRECTION_DELTA_Y = [0, 1, 1, -1]
+def minimax_alpha_beta(plateau: Plateau, couleur: str, couleurIA: str, depth: int, maximizingPlayer: bool, alpha: float, beta: float,depthMax = 5):
 
-def minimax_alpha_beta(plateau: Plateau, couleur: str, couleurIA: str, depth: int, maximizingPlayer: bool, alpha: float, beta: float):
-                plateau_test = Plateau(historique= plateau.historique.copy())
-                # Vérifie si on est arrivé à la profondeur maximale ou si le jeu est terminé
-                try:
-                    state= plateau_test.state(plateau_test.historique[-1])
-                except:
-                    state= plateau_test.state(None)
+    # Vérifie si on est arrivé à la profondeur maximale ou si le jeu est terminé
+    try:
+        state= plateau.state(plateau.historique[-1])
+    except:
+        state= plateau.state(None)
 
-                if depth == 0 or state== 2 or state == 1:
-                    return None, heuristicValue(plateau_test, couleurIA)
+    if state == 1:
+        scoreFinal = 100000 / (depthMax+1-depth)
+        valeur = -scoreFinal if maximizingPlayer else scoreFinal
+        # print(valeur)
+        # print(plateau)
+        return valeur
+    if state == 2:
+        print("plateau plein")
+        return 0
+    if depth == 0:
+        valeur = heuristicValue(plateau, couleurIA)
+        # print(valeur)
+        # print(plateau)
 
-                # Maximizing player
-                if maximizingPlayer:
-                    value = -float("inf")
-                    bestColonne= None
+        return valeur
 
-                    for colonne in coupsPossibles(plateau_test):
-                        ligne= plateau_test.jouerJeton(colonne, couleur)
-                        new_value = minimax_alpha_beta(plateau_test, getCouleurAdverse(couleur), couleurIA, depth-1, False, alpha, beta)[1]
-                        if new_value > value:
-                            value = new_value
-                            bestColonne= colonne
-                            bestLigne= ligne
-                        alpha = max(alpha, value)
-                        if beta <= value:
-                            break  # élagage Alpha-Beta
-                    return (bestLigne, bestColonne), value
+    # Maximizing player
+    if maximizingPlayer:
+        value = float("-inf")
 
-                # Minimizing player
-                else:
-                    value = float("inf")
-                    bestColonne = None
+        for colonne in coupsPossibles(plateau):
+            plateau.jouerJeton(colonne, couleur)
+            value = max(value,minimax_alpha_beta(plateau, getCouleurAdverse(couleur), couleurIA, depth-1, False, alpha, beta,depthMax))
+            plateau.annulerCoup()
+            alpha = max(alpha, value)
+            if beta <= value:
+                break  # élagage Alpha-Beta
+        return value
 
-                    for colonne in coupsPossibles(plateau_test):
-                        ligne= plateau_test.jouerJeton (colonne, couleur)
-                        new_value = minimax_alpha_beta(plateau_test, getCouleurAdverse(couleur), couleurIA, depth-1, True, alpha, beta)[1]
-                        if new_value < value:
-                            value = new_value
-                            bestColonne = colonne
-                            bestLigne= ligne
-                        beta = min(beta, value)
-                        if value <= alpha:
-                            break  # élagage Alpha-Beta
-                    return (bestLigne, bestColonne), value
+    # Minimizing player
+    else:
+        value = float("inf")
+
+        for colonne in coupsPossibles(plateau):
+            plateau.jouerJeton (colonne, couleur)
+            value = min(value,minimax_alpha_beta(plateau, getCouleurAdverse(couleur), couleurIA, depth-1, True, alpha, beta,depthMax))
+            plateau.annulerCoup()
+            beta = min(beta, value)
+            if value <= alpha:
+                break  # élagage Alpha-Beta
+        return value
 
 def coupsPossibles(plateau: Plateau):
     coupsPossibles=[]
     for i in range(12):
-        if plateau.matrice[5][i]==None:
+        if plateau.matrice[5][i].couleur=="blanc":
             coupsPossibles.append(i)
     return coupsPossibles
         
 def getCouleurAdverse(couleur: str):
     return 'jaune' if couleur=='rouge' else 'rouge'
 
-def heuristicValue(plateau: Plateau, couleur: str):
+def heuristicValue(plateau: Plateau, couleurIA: str):
+    multiplier = [1, 5]
+    score = ptsVertical(plateau, couleurIA, multiplier) + \
+        ptsHorizontal(plateau, couleurIA, multiplier) + \
+        ptsDiagonale(plateau, couleurIA, multiplier)
+    return score
 
-    # Les valeurs de l'heuristique pour chaque direction possible
-    score = [0] * 4  # [horizontal, vertical, diagonale /, diagonale \]
 
-    # On parcourt toutes les directions possibles
-    for direction in range(4):
-        # On parcourt toutes les positions sur le plateau dans cette direction
-        for i in range(4):
-            for j in range(4):
-                # On récupère le jeton à cette position
-                jeton = plateau.matrice[i][j]
-                if jeton != None:
-                    break
+def ptsVertical(plateau: Plateau, couleurIA: str, multiplier: int):
+    inARow = 0
+    threes = 0
+    twos = 0
+    for i in range(12):
+        for j in range(6):
+                if plateau.matrice[j][i].couleur == couleurIA:
+                    inARow += 1
                 else:
-                    print("ok")
-                # On ne traite que les jetons du joueur actuel
-                    if jeton.couleur == couleur:
-                        # On initialise le nombre de jetons alignés à 1
-                        jetonsAlignes = 1
+                    inARow = 0
+                if inARow == 3:
+                    threes += 1
+                    twos -= 1
+                elif inARow == 2:
+                    twos += 1
+        inARow = 0
+    return twos * multiplier[0] + threes * multiplier[1]
 
-                        # On parcourt les positions suivantes dans la direction courante
-                        for k in range(1, 4):
-                            # On calcule les coordonnées de la position suivante
-                            x = i + k * DIRECTION_DELTA_X[direction]
-                            y = j + k * DIRECTION_DELTA_Y[direction]
 
-                            # Si la position est hors du plateau, on sort de la boucle
-                            if x < 0 or x >= 4 or y < 0 or y >= 4:
-                                break
+def ptsHorizontal(plateau: Plateau, couleurIA: str, multiplier: int):
+    inARow = 0
+    threes = 0
+    twos = 0
+    for i in range(6):
+        for j in range(12):
+                if plateau.matrice[i][j].couleur == couleurIA:
+                    inARow += 1
+                else:
+                    inARow = 0
+                if inARow == 3:
+                    threes += 1
+                    twos -= 1
+                elif inARow == 2:
+                    twos += 1
+        inARow = 0
+    return twos * multiplier[0] + threes * multiplier[1]
 
-                            # On récupère le jeton à cette position
-                            jetonSuivant = plateau[x][y]
 
-                            # Si le jeton est du joueur actuel, on incrémente le nombre de jetons alignés
-                            if jetonSuivant.couleur == couleur:
-                                jetonsAlignes += 1
-                            # Sinon, si la position est vide, on sort de la boucle
-                            elif jetonSuivant == None:
-                                break
-                            # Sinon, la position est occupée par l'adversaire, on sort de la boucle
-                            else:
-                                break
+def ptsDiagonale(plateau: Plateau, couleurIA: str, multiplier: int):
+    inARow = [0, 0, 0, 0]
+    threes = 0
+    twos = 0
+    for i in range(5):
+        for j in range(6):
+                if j+i < 6:
+                    if plateau.matrice[j+i][j].couleur == couleurIA:
+                        inARow[0] += 1
+                    else:
+                        inARow[0] = 0
+                    if plateau.matrice[j+i][12 - 1 - j].couleur == couleurIA:
+                        inARow[2] += 1
+                    else:
+                        inARow[2] = 0
+                if j+i < 12:
+                    if plateau.matrice[j][j+i].couleur == couleurIA:
+                        inARow[1] += 1
+                    else:
+                        inARow[1] = 0
+                    if plateau.matrice[j][12 - 1 - j-i].couleur == couleurIA:
+                        inARow[3] += 1
+                    else:
+                        inARow[3] = 0
+                for r in inARow:
+                    if r == 3:
+                        threes += 1
+                        twos -= 1
+                    elif r == 2:
+                        twos += 1
+        inARow = [0, 0, 0, 0]
 
-                        # On ajoute la valeur heuristique pour cet alignement de jetons dans cette direction
-                        score[direction] += 10 ** jetonsAlignes
-
-    # On calcule la valeur heuristique totale en faisant la somme des valeurs pour toutes les directions
-    scoreTotal = sum(score)
-    # On retourne la valeur heuristique totale
-    return scoreTotal
+    return twos * multiplier[0] + threes * multiplier[1]
 
 def calculTempsExec(fonction):
     def inner(*args, **kwargs):
@@ -125,10 +153,18 @@ def calculTempsExec(fonction):
 
 @calculTempsExec
 def iaJouerJeton(plateau, couleur: str):
-    ligne, colonne= minimax_alpha_beta(plateau, couleur, couleur, 4, -float('inf'), float('inf'), True)[0]
-    jeton = Jeton(ligne, colonne, couleur)
-    plateau.matrice[ligne][colonne] = jeton
-    plateau.historique.append(jeton)
-    print("Colonne jouée par l'IA: {}".format(colonne+1))
+    bestColonne = 0
+    bestScore = float("-inf")
+
+    for coup in coupsPossibles(plateau):
+        plateau.jouerJeton(coup, couleur)
+        score = minimax_alpha_beta(plateau, getCouleurAdverse(couleur), couleur, 5, False,float('-inf'), float('inf'), 5)
+        plateau.annulerCoup()
+        print("Score: {}, Coups :{}".format(score,coup))
+        if score > bestScore:
+            bestScore = score
+            bestColonne = coup
+    plateau.jouerJeton(bestColonne, couleur)
+    print("Colonne jouée par l'IA: {}".format(bestColonne+1))
     return 0
  
