@@ -13,16 +13,12 @@ def minimax_alpha_beta(plateau: Plateau, couleur: str, couleurIA: str, depth: in
     if state == 1:
         scoreFinal = 100000 / (depthMax+1-depth)
         valeur = -scoreFinal if maximizingPlayer else scoreFinal
-        # print(valeur)
-        # print(plateau)
         return valeur
     if state == 2:
         print("plateau plein")
         return 0
     if depth == 0:
         valeur = heuristicValue(plateau, couleurIA)
-        # print(valeur)
-        # print(plateau)
 
         return valeur
 
@@ -160,7 +156,6 @@ def iaJouerJeton(plateau, couleur: str):
         plateau.jouerJeton(coup, couleur)
         score = minimax_alpha_beta(plateau, getCouleurAdverse(couleur), couleur, 5, False,float('-inf'), float('inf'), 5)
         plateau.annulerCoup()
-        print("Score: {}, Coups :{}".format(score,coup))
         if score > bestScore:
             bestScore = score
             bestColonne = coup
