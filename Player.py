@@ -2,7 +2,7 @@ from Plateau import Plateau
 from IA import iaJouerJeton
 import sys
 
-#classe décrivant un joueur, caractérisé par le fait qu'il soit IA ou non et s'il commence ou non, par défaut le joueur et humain et ne commence pas (jeton jaune)
+#classe décrivant un joueur, caractérisé par le fait qu'il soit IA ou non et s'il commence ou non, par défaut le joueur est humain et ne commence pas (jeton jaune)
 class Player:
     def __init__(self,start=False, ia=False):
         self.ia=ia
@@ -11,7 +11,7 @@ class Player:
         else:
             self.couleur='jaune'
     
-    #méthode faisant le processus d'un tour du jeu pour un joueur ou pour l'IA
+    #méthode faisant le processus d'un tour du jeu pour un joueur
     def jouer(self, plateau: Plateau):
 
       #tour pour un joueur

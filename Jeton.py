@@ -1,4 +1,4 @@
-###Classe representant un jeton caractérisé par sa position en x et y ainsi que sa couleur. Un jeton de joueur sera jaune ou rouge, un jeton blanc est a valeur par défaut
+###Classe representant un jeton caractérisé par sa position en x et y ainsi que sa couleur. Un jeton de joueur sera jaune ou rouge, un jeton blanc est la valeur par défaut
 class Jeton:
 
     def __init__(self, ligne: int= None, colonne: int= None, couleur: str= "blanc"):
