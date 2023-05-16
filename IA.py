@@ -2,23 +2,26 @@ from Plateau import Plateau
 from Jeton import Jeton
 import time
 
+###Fonctions relatives à l'IA
+
+#Algo min max avec elagage alpha beta
 def minimax_alpha_beta(plateau: Plateau, couleur: str, couleurIA: str, depth: int, maximizingPlayer: bool, alpha: float, beta: float,depthMax = 5):
 
     # Vérifie si on est arrivé à la profondeur maximale ou si le jeu est terminé
     try:
-        state= plateau.state(plateau.historique[-1])
+        etat= plateau.etat(plateau.historique[-1])
     except:
-        state= plateau.state(None)
+        etat= plateau.etat(None)
 
-    if state == 1:
+    if etat == 1:
         scoreFinal = 100000 / (depthMax+1-depth)
         valeur = -scoreFinal if maximizingPlayer else scoreFinal
         return valeur
-    if state == 2:
+    if etat == 2:
         print("plateau plein")
         return 0
     if depth == 0:
-        valeur = heuristicValue(plateau, couleurIA)
+        valeur = heuristicScore(plateau, couleurIA)
 
         return valeur
 
@@ -48,28 +51,33 @@ def minimax_alpha_beta(plateau: Plateau, couleur: str, couleurIA: str, depth: in
                 break  # élagage Alpha-Beta
         return value
 
+#methode retournant une liste des colonnes ou il est possible de jouer
 def coupsPossibles(plateau: Plateau):
     coupsPossibles=[]
     for i in range(12):
         if plateau.matrice[5][i].couleur=="blanc":
             coupsPossibles.append(i)
     return coupsPossibles
-        
+
+#methode retournant la couleur des jetons de l'adversaire
 def getCouleurAdverse(couleur: str):
     return 'jaune' if couleur=='rouge' else 'rouge'
 
-def heuristicValue(plateau: Plateau, couleurIA: str):
-    multiplier = [1, 5]
-    score = ptsVertical(plateau, couleurIA, multiplier) + \
-        ptsHorizontal(plateau, couleurIA, multiplier) + \
-        ptsDiagonale(plateau, couleurIA, multiplier)
+#methode calculant l'heuristique
+def heuristicScore(plateau: Plateau, couleurIA: str):
+    multiplicateur = [1, 5]
+    score = ptsVertical(plateau, couleurIA, multiplicateur) + \
+        ptsHorizontal(plateau, couleurIA, multiplicateur) + \
+        ptsDiagonale(plateau, couleurIA, multiplicateur)
     return score
 
+#generateur de point:
+#on compte sur tout le plateau le nombre de groupe de 2 ou 3 jetons alignés, une fois ces nombres trouvés on applique un coef multiplicateur (1 pour les groupes de 2 et 5 pour les grp de 3)
 
-def ptsVertical(plateau: Plateau, couleurIA: str, multiplier: int):
+def ptsVertical(plateau: Plateau, couleurIA: str, multiplicateur: int):
     inARow = 0
-    threes = 0
-    twos = 0
+    trois = 0
+    deux = 0
     for i in range(12):
         for j in range(6):
                 if plateau.matrice[j][i].couleur == couleurIA:
@@ -77,18 +85,17 @@ def ptsVertical(plateau: Plateau, couleurIA: str, multiplier: int):
                 else:
                     inARow = 0
                 if inARow == 3:
-                    threes += 1
-                    twos -= 1
+                    trois += 1
+                    deux -= 1
                 elif inARow == 2:
-                    twos += 1
+                    deux += 1
         inARow = 0
-    return twos * multiplier[0] + threes * multiplier[1]
+    return deux * multiplicateur[0] + trois * multiplicateur[1]
 
-
-def ptsHorizontal(plateau: Plateau, couleurIA: str, multiplier: int):
+def ptsHorizontal(plateau: Plateau, couleurIA: str, multiplicateur: int):
     inARow = 0
-    threes = 0
-    twos = 0
+    trois = 0
+    deux = 0
     for i in range(6):
         for j in range(12):
                 if plateau.matrice[i][j].couleur == couleurIA:
@@ -96,18 +103,17 @@ def ptsHorizontal(plateau: Plateau, couleurIA: str, multiplier: int):
                 else:
                     inARow = 0
                 if inARow == 3:
-                    threes += 1
-                    twos -= 1
+                    trois += 1
+                    deux -= 1
                 elif inARow == 2:
-                    twos += 1
+                    deux += 1
         inARow = 0
-    return twos * multiplier[0] + threes * multiplier[1]
+    return deux * multiplicateur[0] + trois * multiplicateur[1]
 
-
-def ptsDiagonale(plateau: Plateau, couleurIA: str, multiplier: int):
+def ptsDiagonale(plateau: Plateau, couleurIA: str, multiplicateur: int):
     inARow = [0, 0, 0, 0]
-    threes = 0
-    twos = 0
+    trois = 0
+    deux = 0
     for i in range(5):
         for j in range(6):
                 if j+i < 6:
@@ -130,14 +136,15 @@ def ptsDiagonale(plateau: Plateau, couleurIA: str, multiplier: int):
                         inARow[3] = 0
                 for r in inARow:
                     if r == 3:
-                        threes += 1
-                        twos -= 1
+                        trois += 1
+                        deux -= 1
                     elif r == 2:
-                        twos += 1
+                        deux += 1
         inARow = [0, 0, 0, 0]
 
-    return twos * multiplier[0] + threes * multiplier[1]
+    return deux * multiplicateur[0] + trois * multiplicateur[1]
 
+#décorateur calculant le temps d'execution d'une fonction
 def calculTempsExec(fonction):
     def inner(*args, **kwargs):
         debut = time.time()
@@ -147,18 +154,24 @@ def calculTempsExec(fonction):
         return resultat
     return inner
 
+
+#méthode executant le processus de jeu de l'IA
 @calculTempsExec
 def iaJouerJeton(plateau, couleur: str):
     bestColonne = 0
     bestScore = float("-inf")
 
+    #calcul du meilleur coup grace à l'algo min max
     for coup in coupsPossibles(plateau):
         plateau.jouerJeton(coup, couleur)
-        score = minimax_alpha_beta(plateau, getCouleurAdverse(couleur), couleur, 5, False,float('-inf'), float('inf'), 5)
+        #appel de l'algo
+        score = minimax_alpha_beta(plateau, getCouleurAdverse(couleur), couleur, 4, False,float('-inf'), float('inf'), 5)
         plateau.annulerCoup()
         if score > bestScore:
             bestScore = score
             bestColonne = coup
+
+    #ajout du jeton de l'IA sur le plateau
     plateau.jouerJeton(bestColonne, couleur)
     print("Colonne jouée par l'IA: {}".format(bestColonne+1))
     return 0
